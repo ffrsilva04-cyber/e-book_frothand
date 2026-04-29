@@ -677,10 +677,10 @@
       <p class="hero-subhead">Descubra as estratégias de Home Staging e Feng Shui que transformam qualquer imóvel num espaço irresistível para compradores.</p>
 
       <div class="hero-form">
-        <input type="text" placeholder="O seu nome" />
-        <input type="email" placeholder="O seu melhor e-mail" />
-        <input type="tel" placeholder="Contacto telefónico" />
-        <button class="cta-btn">
+        <input type="text"  id="hero-nome"     placeholder="O seu nome" />
+        <input type="email" id="hero-email"    placeholder="O seu melhor e-mail" />
+        <input type="tel"   id="hero-telefone" placeholder="Contacto telefónico" />
+        <button id="hero-btn" class="cta-btn" onclick="submitForm('hero')">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
           Enviar o meu e-book gratuito
         </button>
@@ -831,11 +831,11 @@
       <div class="cta-form">
         <p class="cta-form-title">Receba o e-book agora</p>
         <p class="cta-form-sub">Preencha e receba acesso imediato no seu e-mail</p>
-        <input type="text" placeholder="Nome" />
-        <input type="text" placeholder="Último Nome" />
-        <input type="email" placeholder="E-mail" />
-        <input type="tel" placeholder="Contacto Telefónico" />
-        <button class="cta-btn">
+        <input type="text"  id="cta-nome"       placeholder="Nome" />
+        <input type="text"  id="cta-ultimoNome" placeholder="Último Nome" />
+        <input type="email" id="cta-email"      placeholder="E-mail" />
+        <input type="tel"   id="cta-telefone"   placeholder="Contacto Telefónico" />
+        <button id="cta-btn" class="cta-btn" onclick="submitForm('cta')">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
           Quero o meu e-book gratuito!
         </button>
@@ -854,6 +854,7 @@
   </footer>
 
   <script>
+    // Scroll reveal
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
         if (e.isIntersecting) {
@@ -862,6 +863,67 @@
       });
     }, { threshold: 0.12 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── Google Apps Script Integration ──
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQUxwcd9y4bVSymvKHiu4spQ61EHFZVHfiewcXi1JMq1did5QnwtItTlcDEAn5n1Q/exec';
+
+    async function submitForm(origem) {
+      const isHero = origem === 'hero';
+
+      const nome       = document.getElementById(isHero ? 'hero-nome'     : 'cta-nome').value.trim();
+      const ultimoNome = isHero ? '' : document.getElementById('cta-ultimoNome').value.trim();
+      const email      = document.getElementById(isHero ? 'hero-email'    : 'cta-email').value.trim();
+      const telefone   = document.getElementById(isHero ? 'hero-telefone' : 'cta-telefone').value.trim();
+
+      // Validação
+      if (!nome || !email) {
+        alert('Por favor preencha o nome e o e-mail.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Por favor introduza um e-mail válido.');
+        return;
+      }
+
+      const btn = document.getElementById(isHero ? 'hero-btn' : 'cta-btn');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'A enviar...';
+      btn.style.opacity = '0.75';
+
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome, ultimoNome, email, telefone })
+        });
+
+        btn.innerHTML = '✓ E-book enviado! Verifique o seu e-mail.';
+        btn.style.opacity = '1';
+        btn.style.background = '#5A8A50';
+        btn.style.color = '#fff';
+
+        // Limpa os campos
+        const ids = isHero
+          ? ['hero-nome', 'hero-email', 'hero-telefone']
+          : ['cta-nome', 'cta-ultimoNome', 'cta-email', 'cta-telefone'];
+        ids.forEach(id => document.getElementById(id).value = '');
+
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        btn.style.opacity = '1';
+        btn.style.background = '#B04040';
+        btn.style.color = '#fff';
+        setTimeout(() => {
+          btn.style.background = '';
+          btn.style.color = '';
+          btn.innerHTML = originalHTML;
+        }, 3000);
+      }
+    }
   </script>
 </body>
 </html>
